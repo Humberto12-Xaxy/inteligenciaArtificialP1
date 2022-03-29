@@ -20,7 +20,7 @@ def descomprimirArchivos():
     zip_ref.close()
 
 def ObtenerImagenesClasificadas():
-    # descomprimirArchivos()
+    descomprimirArchivos()
     TRAININ_DIR = './temp/train'
     trainin_datagen = ImageDataGenerator(rescale= 1./255)
 
@@ -92,17 +92,13 @@ def crearModeloConvulucional():
 
     history = model.fit_generator(
         ObtenerImagenesClasificadas()[0], 
-        epochs = 25, 
+        epochs = 20, 
         validation_data = ObtenerImagenesClasificadas()[1], 
         verbose = 1)
 
     loss = history.history['loss']
 
-    plt.xlabel('# Epoca')
-    plt.ylabel('Magnitud de perdida')
-    plt.plot(loss)
-
-    plt.show()
+    return loss
 
 def crearModeloDenso1():
     model = tf.keras.models.Sequential([
@@ -123,16 +119,49 @@ def crearModeloDenso1():
         epochs = 20,
         validation_data = imagenesClasificadasBlancoYNegro()[1],
         verbose = 1)
+
     loss = historia.history['loss']
 
+    return loss
+
+def crearModeloDenso2():
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape = (150, 150, 1)),
+        tf.keras.layers.Dense(70, activation = tf.nn.relu),
+        tf.keras.layers.Dense(70, activation = tf.nn.relu),
+        tf.keras.layers.Dense(70, activation = tf.nn.relu),
+        tf.keras.layers.Dense(5, activation = tf.nn.softmax)
+    ])
+
+    model.compile(
+        optimizer = 'rmsprop',
+        loss = 'categorical_crossentropy',
+        metrics = ['accuracy']
+    )
+
+    historia = model.fit_generator(
+        imagenesClasificadasBlancoYNegro()[0], 
+        epochs = 20,
+        validation_data = imagenesClasificadasBlancoYNegro()[1],
+        verbose = 1)
+
+    loss = historia.history['loss']
+
+    return loss
+    
+
+def generarGrafica():
+    loss_convulucional = crearModeloConvulucional()
+    loss_denso1 = crearModeloDenso1()
+    loss_denso2 = crearModeloDenso2()
     plt.xlabel('# Epoca')
     plt.ylabel('Magnitud de perdida')
-    plt.plot(loss)
+    plt.plot(loss_convulucional, label = 'Convulucional')
+    plt.plot(loss_denso1, label = 'Denso 2 C 50 N')
+    plt.plot(loss_denso2, label = 'Denso 3 C 70 N')
 
     plt.show()
 
 if __name__ == '__main__':
-    print('-----Convulucional------')
-    crearModeloConvulucional()
-    print('------Denso-----')
-    crearModeloDenso1()
+    # descomprimirArchivos()
+    generarGrafica()
